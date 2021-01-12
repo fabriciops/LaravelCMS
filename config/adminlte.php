@@ -238,9 +238,11 @@ return [
             'text'        => 'Meus Usuários',
             'url'         => 'painel/users',
             'icon'        => 'far fa-fw fa-file',
-            'can'         => 'edit-users'
+            
         ],
+
         ['header' => 'Configurações'],
+        
         [
             'text'        => 'Configurações do Site',
             'url'         => 'painel/settings',
