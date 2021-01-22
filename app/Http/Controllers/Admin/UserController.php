@@ -9,13 +9,14 @@ namespace App\Http\Controllers\Admin;
 // use Illuminate\Support\Facades\Hash;
 // use Illuminate\Support\Facades\Auth;
 
-
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\User;
+
+
 
 class UserController extends Controller
 {
@@ -24,6 +25,12 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    public function __construct(){
+        $this->middleware('auth');
+        $this->middleware('can:edit-users');
+        
+    }
+
     public function index()
     {   
         // paginate quantidade de usuário mostrados
@@ -120,30 +127,67 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $user = User::find($id);
-
-        if($user){
+        
+        if($user) {
             $data = $request->only([
                 'name',
                 'email',
                 'password',
                 'password_confirmation'
             ]);
-
             $validator = Validator::make([
                 'name' => $data['name'],
-                'email' => $data['email'],
-
-            ],[
-                'name' => ['require', 'string', 'max:100'],
-                'email' => ['require', 'string', 'email','max:100']
+                'email' => $data['email']
+            ], [
+                'name' => ['required', 'string', 'max:100'],
+                'email' => ['required', 'string', 'email', 'max:100']
             ]);
 
-            if($validator->fails()){
-                return redirect()->route('admin.users.edit', [ 'user' => $id])->withErrors($validator);
+            // name change
+            $user->name = $data['name'];
+
+            //email change
+            if($user->email != $data['email']) {
+                $hasEmail = User::where('email', $data['email'])->get();
+                if(count($hasEmail) === 0) {
+                    $user->email = $data['email'];
+                } else {
+                    $validator->errors()->add('email', __('validation.unique', [
+                        'attribute' => 'email'
+                    ]));
+                }
             }
+
+            //password change
+            if(!empty($data['password'])) {
+                if(strlen($data['password']) >= 4) {
+                    if($data['password'] === $data['password_confirmation']) {
+                        $user->password = Hash::make($data['password']);
+                    } else {
+                        $validator->errors()->add('password', __('validation.confirmed', [
+                            'attribute' => 'password'
+                        ]));
+                    }
+                } else {
+                    $validator->errors()->add('password', __('validation.min.string', [
+                        'attribute' => 'password',
+                        'min' => 4
+                    ]));
+                }
+            }
+
+            if(count( $validator->errors() ) > 0) {
+                return redirect()->route('users.edit', [
+                    'user' => $id
+                ])->withErrors($validator);
+            }
+            
+            $user->save();
         }
-        // return view('admin.users.edit');
+        
+        return redirect()->route('users.index');
     }
+    
 
     /**
      * Remove the specified resource from storage.
