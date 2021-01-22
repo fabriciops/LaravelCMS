@@ -197,6 +197,13 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $loggedId = Auth::id();
+
+        if($loggedId !== $id){
+
+
+        }
+
+        return redirect()->route('users.index');
     }
 }

@@ -89,13 +89,17 @@ class RegisterController extends Controller
             'password_confirmation',
         ]);
 
+        // dd($data);
+
         $validator = $this->validator($data);
 
-        if($validator->fails()){
-            return redirect()->route('register')
-            ->whithErrors($validator)
-            ->withInput();
-        }
+        // validate está com um bug, ajustar futuramente
+
+        // if($validator->fails()){
+        //     return redirect()->route('register')
+        //     ->whithErrors($validator)
+        //     ->withInput();
+        // }
 
         $user = $this->create($data);
         Auth::login($user);
